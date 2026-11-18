@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/OWNER/apa_nf/master/nextflow_schema.json",
+  "$id": "https://raw.githubusercontent.com/mericarazo/3end_lapa_nf/master/nextflow_schema.json",
   "title": "apa-3seq-lapa pipeline parameters",
   "description": "3'-end sequencing with UMIs: adapter trimming, demultiplexing, UMI extraction, STAR alignment, internal-priming filter, UMI deduplication and polyA site calling with LAPA for a single pool.",
   "type": "object",
