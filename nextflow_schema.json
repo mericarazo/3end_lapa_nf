@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/OWNER/apa_nf/master/nextflow_schema.json",
+  "title": "apa-3seq-lapa pipeline parameters",
+  "description": "3'-end sequencing with UMIs: adapter trimming, demultiplexing, UMI extraction, STAR alignment, internal-priming filter, UMI deduplication and polyA site calling with LAPA for a single pool.",
+  "type": "object",
+  "definitions": {
+    "input_options": {
+      "title": "Input Options",
+      "type": "object",
+      "description": "Reads and reference files.",
+      "default": "",
+      "properties": {
+        "reads": {
+          "type": "string",
+          "description": "Paired-end FASTQ pattern of the pool",
+          "help_text": "One quoted glob pattern that matches R1 and R2 of the pool, for example '/path/TDP43_KD_POOL_1_{1,2}.fq.gz'. It must contain {1,2} or a wildcard.",
+          "fa_icon": "fas fa-dna"
+        },
+        "barcodes": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Barcodes FASTA of the pool",
+          "help_text": "FASTA with one barcode per sample. The sequence names are the sample names, e.g. R1_NT, R2_TDP43. The condition is what follows 'R<n>_'.",
+          "fa_icon": "fas fa-barcode"
+        },
+        "star_index": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "STAR genome index directory",
+          "help_text": "Index generated with a STAR version compatible with the one in the container (2.7.4a or newer for 2.7.x).",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "genome_fasta": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Genome FASTA",
+          "help_text": "Reference genome FASTA (e.g. GRCh38 primary assembly). Its .fai index must be next to it (samtools faidx).",
+          "fa_icon": "fas fa-file"
+        },
+        "genome_fai": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Genome FASTA index (.fai)",
+          "help_text": "Optional. Defaults to <genome_fasta>.fai.",
+          "fa_icon": "fas fa-file"
+        },
+        "genome_sizes": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Chromosome sizes file",
+          "help_text": "Two-column chrom.sizes file used by bedtools slop and LAPA.",
+          "fa_icon": "fas fa-file"
+        },
+        "lapa_gtf": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Annotation GTF with three_prime_utr features",
+          "help_text": "GTF used by LAPA. It must contain three_prime_utr features (see gencode_utr_fix).",
+          "fa_icon": "fas fa-file"
+        },
+        "gtf_names": {
+          "type": "string",
+          "format": "file-path",
+          "description": "GTF used only for gene names",
+          "help_text": "Optional. Defaults to lapa_gtf. Only used by the differential analysis step.",
+          "fa_icon": "fas fa-file"
+        }
+      },
+      "required": ["reads", "barcodes", "star_index", "genome_fasta", "genome_sizes", "lapa_gtf"]
+    },
+    "sample_options": {
+      "title": "Sample Options",
+      "type": "object",
+      "description": "Sample design and library parameters.",
+      "default": "",
+      "properties": {
+        "pool_name": {
+          "type": "string",
+          "default": "pool1",
+          "description": "Pool name",
+          "help_text": "Prefix of the differential analysis outputs and the LAPA dataset name when lapa_dataset is 'single'."
+        },
+        "umi_pattern": {
+          "type": "string",
+          "default": "NNNNN",
+          "description": "UMI pattern",
+          "help_text": "umi_tools extract --bc-pattern. One N per UMI nucleotide at the 5' end of R1."
+        },
+        "treatment": {
+          "type": "string",
+          "description": "Condition of interest",
+          "help_text": "Only needed when run_analysis is true. Must match the condition in the barcode names, e.g. TDP43 or N325S."
+        },
+        "control": {
+          "type": "string",
+          "description": "Control condition",
+          "help_text": "Only needed when run_analysis is true. Must match the condition in the barcode names, e.g. NT or WT."
+        }
+      }
+    },
+    "output_options": {
+      "title": "Output Options",
+      "type": "object",
+      "description": "Where results are saved.",
+      "default": "",
+      "properties": {
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "default": "results",
+          "description": "Output directory",
+          "help_text": "Directory that will contain the BAMs, LAPA output, QC reports and logs.",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "publish_mode": {
+          "type": "string",
+          "default": "copy",
+          "enum": ["copy", "symlink", "link", "move", "rellink"],
+          "description": "How outputs are published",
+          "help_text": "Nextflow publishDir mode. 'copy' duplicates files, 'symlink' saves disk space but links point to the work directory."
+        }
+      }
+    },
+    "advanced_options": {
+      "title": "Advanced Options",
+      "type": "object",
+      "description": "Trimming, internal priming and LAPA parameters.",
+      "default": "",
+      "properties": {
+        "adapter_r1": {
+          "type": "string",
+          "default": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
+          "description": "Adapter sequence for R1 (cutadapt -g)"
+        },
+        "adapter_r2": {
+          "type": "string",
+          "default": "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT",
+          "description": "Adapter sequence for R2 (cutadapt -G)"
+        },
+        "ip_window": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "description": "Internal priming window (nt)",
+          "help_text": "Window of nucleotides checked for adenosines, both at the 3' end of the read and downstream in the genome."
+        },
+        "ip_max_a": {
+          "type": "integer",
+          "default": 7,
+          "minimum": 0,
+          "description": "Maximum number of A in the window",
+          "help_text": "Reads with more than this number of A in the window are removed."
+        },
+        "ip_max_run": {
+          "type": "integer",
+          "default": 6,
+          "minimum": 1,
+          "description": "Maximum run of consecutive A",
+          "help_text": "Reads with a longer run of consecutive A are removed."
+        },
+        "lapa_min_replication_rate": {
+          "type": "number",
+          "default": 0.75,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "LAPA minimum replication rate"
+        },
+        "lapa_cluster_window": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 1,
+          "description": "LAPA cluster window (nt)"
+        },
+        "lapa_dataset": {
+          "type": "string",
+          "default": "condition",
+          "enum": ["condition", "single"],
+          "description": "Dataset column written to the LAPA alignment CSV",
+          "help_text": "'condition' uses the condition of each sample (NT, TDP43...) as dataset; 'single' puts all samples in one dataset."
+        },
+        "lapa_clusters_file": {
+          "type": "string",
+          "default": "polyA_clusters.bed",
+          "description": "LAPA clusters file name",
+          "help_text": "File name expected inside lapa_out after running LAPA."
+        },
+        "lapa_counts_file": {
+          "type": "string",
+          "default": "lapa_counts.tsv",
+          "description": "LAPA counts file name",
+          "help_text": "Generated by bin/lapa_analysis.py inside lapa_out."
+        },
+        "lapa_usage_file": {
+          "type": "string",
+          "default": "lapa_usage.tsv",
+          "description": "LAPA usage file name",
+          "help_text": "Generated by bin/lapa_analysis.py inside lapa_out."
+        }
+      }
+    },
+    "differential_analysis_options": {
+      "title": "Differential Analysis Options",
+      "type": "object",
+      "description": "Only used when run_analysis is true.",
+      "default": "",
+      "properties": {
+        "apa_analysis": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run the differential polyA site analysis",
+          "help_text": "Filters, Fisher test, proximal/distal pairing and volcano plot. Requires treatment and control."
+        },
+        "min_mean": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "description": "Minimum mean count in one condition"
+        },
+        "min_usage": {
+          "type": "number",
+          "default": 0.0025,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum mean usage in one condition (fraction)",
+          "help_text": "0.0025 is 0.25 %."
+        },
+        "require_detected_all": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require counts > 0 in all samples of one condition"
+        },
+        "padj": {
+          "type": "number",
+          "default": 0.05,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Adjusted p-value threshold"
+        },
+        "delta": {
+          "type": "number",
+          "default": 0.05,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum absolute change in distal usage"
+        },
+        "highlight": {
+          "type": "string",
+          "default": "STMN2",
+          "description": "Gene to highlight in the volcano plot",
+          "help_text": "Leave empty to highlight nothing."
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "$ref": "#/definitions/input_options" },
+    { "$ref": "#/definitions/sample_options" },
+    { "$ref": "#/definitions/output_options" },
+    { "$ref": "#/definitions/advanced_options" },
+    { "$ref": "#/definitions/differential_analysis_options" }
+  ]
+}

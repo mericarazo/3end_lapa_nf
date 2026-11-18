@@ -1,0 +1,20 @@
+# Use this tamplate to pass your parameters to Nextflow.
+
+# TIP: use $baseDir to refer to the directory where main.nf is located
+# You can also use full paths instead  
+
+# ---- Input Options ----
+reads: "/media/neuro-rna/TDP43/APA_TDP43_KD_shRNA_SHSY5Y/fastqs/TDP43_KD_shRNA_{1,2}.fq.gz"
+#folder or files?
+barcodes: /media/neuro-rna/TDP43/APA_TDP43_KD_shRNA_SHSY5Y/barcodes.fa
+star_index: /media/neuro-rna/E2285B0C285ADF5B/experiments/reference_files/human/index_h149
+genome_fasta: /media/neuro-rna/E2285B0C285ADF5B/experiments/reference_files/human/GRCh38.primary_assembly.genome.fa
+genome_sizes: /media/neuro-rna/E2285B0C285ADF5B/people/MariaC/apa/apa_nf/files/genomesizes.txt
+lapa_gtf: /media/neuro-rna/E2285B0C285ADF5B/people/MariaC/apa/apa_nf/files/gencode.v48.annotation_utr.gtf
+
+treatment: TDP43
+control: NT
+pool_name: TDP43_KD_shRNA
+outdir: /media/neuro-rna/E2285B0C285ADF5B/people/Irene/APA_TDP43_KD_shRNA_SHSY5Y/output
+
+apa_analysis: TRUE
