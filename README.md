@@ -19,6 +19,9 @@ MULTIQC  (FastQC + STAR + flagstat)
 ```
 main.nf                 workflow (solo conecta los modulos)
 nextflow.config         parametros y perfiles
+local.config            parametros para una ejecución en local (con los contenedores de docker necesarios)
+input_params.yml        ejemplo de yml con todos los parámetros definidos
+nextflow_schema.json    configuración necesaria para poder cargar el pipeline en EPI2ME
 modules/                un proceso por fichero: adapter_trim, demultiplex, umi_extract, fastqc,
                         star_align, internal_priming, dedup, lapa, apa_analysis, multiqc
 bin/                    scripts que usan los modulos (internal_priming_filter.sh, apa_analysis.py)
